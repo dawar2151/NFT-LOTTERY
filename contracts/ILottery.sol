@@ -3,6 +3,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 
 interface ILottery{
     struct LOT {
+        address creator;
         uint start_at;
         uint end_at;
         IERC721 ERC_721_TOKEN;

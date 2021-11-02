@@ -10,6 +10,8 @@ contract Lottery is ILottery, Ownable{
     // NFT lotteries started by an owner
     mapping(uint=>LOT) public lotteries;
 
+    mapping(uint=>bool) public checkLottery;
+
     constructor(){
 
     }
@@ -22,15 +24,18 @@ contract Lottery is ILottery, Ownable{
      */
     function startLottery(uint lotteryId, uint  start_at, uint  end_at, address erc721Token, uint assetId) override external returns(bool){
         require(start_at > block.timestamp, "NFT Lottery: invalid start_at");
-         require(start_at < end_at, "NFT Lottery: invalid end_at");
-
-        lotteries[lotteryId] = LOT(
-            start_at,
-            end_at,
-            IERC721(erc721Token),
-            assetId
-        );
-        return true;
+        require(start_at < end_at, "NFT Lottery: invalid end_at");
+        if(!checkLottery[lotteryId]){
+            lotteries[lotteryId] = LOT(
+                _msgSender(),
+                start_at,
+                end_at,
+                IERC721(erc721Token),
+                assetId
+            );
+            checkLottery[lotteryId] = true;
+        }
+        return true;    
     }
     /**
     * @dev pick a winner
@@ -53,7 +58,7 @@ contract Lottery is ILottery, Ownable{
     * @param lotteryId a lottery id
      */
     function endLottery(uint lotteryId) onlyOwner() override external returns(bool) {
-         
+        require(_msgSender() == lotteries[lotteryId].creator, "Lottery: user must be owner");
         uint index = random(lotteryId) % participants[lotteryId].length;
         lotteries[lotteryId].ERC_721_TOKEN.transferFrom(_msgSender(), participants[lotteryId][index], lotteries[lotteryId].assetId);
         participants[lotteryId] = new address[](0);
